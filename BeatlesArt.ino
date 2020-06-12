@@ -25,6 +25,8 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
+  randomSEED(analogREAD(0)); // here there will be input for music to generate random seed value for each run of the loop 
+
 }
 
 void loop() {
