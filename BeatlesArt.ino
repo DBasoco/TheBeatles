@@ -16,6 +16,14 @@ int in4 = 7;
 int motorSpeedAD = 0;
 int motorSpeedBC = 0;
 
+// joystick input
+
+int yAxis = A1;
+int xAxis = A0;
+
+int ypos = 512;
+int xpos = 512;
+
 
 // I need some kind of input for wifi control here, still looking for how to do that
 
@@ -30,84 +38,77 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
+  digitalWrite(enAD, LOW);
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+
+  digitalWrite(enBC, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+
   //randomSEED(analogREAD(0)); // here there will be input for music to generate random seed value for each run of the loop 
 
 }
 
 
 void loop() {
-  int xAxis = analogRead(A0);
-  int yAxis = analogRead(A1);
+  ypos = analogRead(yAxis);
+  xpos = analogRead(xAxis);
 
-  //yAxis control test, car drive
+  if (ypos < 460) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
 
-  if (yAxis < 470) {
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+
+    ypos = ypos - 460;
+    ypos = ypos * -1;
+
+    motorSpeedAD = map(ypos, 0, 460, 0, 255);
+    motorSpeedBC = map(ypos, 0, 460, 0, 255);
+  }
+  else if (ypos > 564) {
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
 
     digitalWrite(in3, HIGH);
     digitalWrite(in4, LOW);
 
-    motorSpeedAD = map(yAxis, 470, 0, 0, 255);
-    motorSpeedBC = map(yAxis, 470, 0, 0, 255);
+    motorSpeedAD = map(ypos, 564, 1023, 0, 255);
+    motorSpeedBC = map(ypos, 564, 1023, 0, 255);
   }
-
-  else if (yAxis > 550) {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-    
-    motorSpeedAD = map(yAxis, 550, 1023, 0, 255);
-    motorSpeedBC = map(yAxis, 550, 1023, 0, 255);
-  }
-
   else {
     motorSpeedAD = 0;
     motorSpeedBC = 0;
   }
 
-  //xAxis control test car drive
-  
-  if (xAxis < 470) {
-    int xMapped = map(xAxis, 470, 0, 0, 255);
 
-    motorSpeedAD = motorSpeedAD - xMapped;
-    motorSpeedBC = motorSpeedBC + xMapped;
+  if (xpos < 460) {
+    xpos = xpos - 460;
+    xpos = xpos * -1;
 
-    if (motorSpeedAD < 0) {
-      motorSpeedAD = 0;
-    }
-    if (motorSpeedBC > 255) {
-      motorSpeedBC = 255;
-    }
+    xpos = map(xpos, 0, 460, 0, 255);
+
+    motorSpeedAD = motorSpeedAD - xpos;
+    motorSpeedBC = motorSpeedBC + xpos;
+
+    if (motorSpeedAD < 0) motorSpeedAD = 0;
+    if (motorSpeedBC > 255) motorSpeedBC = 255;
+  }
+  else if (xpos > 564) {
+    xpos = map(xpos, 564, 1023, 0, 255);
+
+    motorSpeedAD = motorSpeedAD + xpos;
+    motorSpeedBC = motorSpeedBC - xpos;
+
+    if (motorSpeedAD > 255) motorSpeedAD = 255;
+    if (motorSpeedBC < 0) motorSpeedBC = 0;
   }
 
-  if (xAxis > 550) {
-    int xMapped = map(xAxis, 550, 1023, 0, 255);
-
-    motorSpeedAD = motorSpeedAD + xMapped;
-    motorSpeedBC = motorSpeedBC - xMapped;
-
-    if (motorSpeedAD > 255) {
-      motorSpeedAD = 255;
-    }
-    if (motorSpeedBC < 0) {
-      motorSpeedBC = 0;
-    }
-  }
-
-  //magentic shearing observed at low output, prevent by shut off command
-
-  if (motorSpeedAD < 70) {
-    motorSpeedAD = 0;
-  }
-  if (motorSpeedBC < 70) {
-    motorSpeedBC = 0;
-  }
-
-  //output speed sent to motors
   analogWrite(enAD, motorSpeedAD);
   analogWrite(enBC, motorSpeedBC);
+
+
+  
 }
