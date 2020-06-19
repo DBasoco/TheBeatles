@@ -1,3 +1,8 @@
+#include <WiFiServer.h>
+#include <WiFiClient.h>
+#include <WiFiUdp.h>
+#include <WiFi.h>
+
 // Motor A,D
 
 int enAD = 10; // motors A&D will run the same way
@@ -11,32 +16,40 @@ int enBC = 5; // motors B&C will run the same way
 int in3 = 6;
 int in4 = 7;
 
-// Initialize motor speeds
 
-int motorSpeedAD = 0;
-int motorSpeedBC = 0;
-
-// joystick input
-
-int yAxis = A1;
-int xAxis = A0;
-
-int ypos = 512;
-int xpos = 512;
+// WiFi initialize
+unsigned char topspin = 200;
+char getstr;
 
 
-// I need some kind of input for wifi control here, still looking for how to do that
+//time delay and clock vs. counter
+
+long randDelay;
+long randDirec;
+
+
+//motor speed
+
+long randSpeedAD;
+long randSpeedBC;
+
+bool song;
 
 
 
 // here I set up the pins as outputs
 void setup() {
+  Serial.begin(9600);
+  
   pinMode(enAD, OUTPUT);
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
   pinMode(enBC, OUTPUT);
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
+
+  stop();
+  song = true;
 
   digitalWrite(enAD, LOW);
   digitalWrite(in1, HIGH);
@@ -45,70 +58,99 @@ void setup() {
   digitalWrite(enBC, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
+  
+  randomSeed(analogRead(0));
 
-  //randomSEED(analogREAD(0)); // here there will be input for music to generate random seed value for each run of the loop 
+}
 
+// have the vinyls spin
+
+void spin() {
+  while (getstr != 'S') {
+    randDelay = random(5000, 25000);
+    randDirec = random(0, 4);
+    
+    randSpeedAD = random(50, 256);
+    randSpeedBC = random(50, 256);
+    
+    if (randDirec = 0) {
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+
+      digitalWrite(in3, LOW);
+      digitalWrite(in4, HIGH);
+    }
+    else if (randDirec = 1) {
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+
+      digitalWrite(in3, HIGH);
+      digitalWrite(in4, LOW);
+    }
+    else if (randDirec = 2) {
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+
+      digitalWrite(in3, LOW);
+      digitalWrite(in4, HIGH);
+    }
+    else if (randDirec = 3) { 
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+
+      digitalWrite(in3, HIGH);
+      digitalWrite(in4, LOW);
+    }
+
+    analogWrite(enAD, randSpeedAD);
+    analogWrite(enBC, randSpeedBC);
+
+
+    delay(randDelay);
+  }
+}
+
+void stop() {
+  digitalWrite(enAD, LOW);
+  digitalWrite(enBC, LOW);
+
+  song = !song;
+}
+
+// have the music play
+
+void music() {
+  song = true;  
+  play();
+}
+
+
+void next(){
+  
+}
+
+
+void previous() {
+  
+}
+
+
+void pause() {
+  
+}
+
+
+void play() {
+  
 }
 
 
 void loop() {
-  ypos = analogRead(yAxis);
-  xpos = analogRead(xAxis);
-
-  if (ypos < 460) {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-
-    ypos = ypos - 460;
-    ypos = ypos * -1;
-
-    motorSpeedAD = map(ypos, 0, 460, 0, 255);
-    motorSpeedBC = map(ypos, 0, 460, 0, 255);
+  getstr = Serial.read();
+  switch(getstr) {
+    case 's': spin(); break;
+    case 'm': music(); break;
+    case 'c': music(); spin(); break;
+    case 'S': stop(); break;
   }
-  else if (ypos > 564) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-
-    digitalWrite(in3, HIGH);
-    digitalWrite(in4, LOW);
-
-    motorSpeedAD = map(ypos, 564, 1023, 0, 255);
-    motorSpeedBC = map(ypos, 564, 1023, 0, 255);
-  }
-  else {
-    motorSpeedAD = 0;
-    motorSpeedBC = 0;
-  }
-
-
-  if (xpos < 460) {
-    xpos = xpos - 460;
-    xpos = xpos * -1;
-
-    xpos = map(xpos, 0, 460, 0, 255);
-
-    motorSpeedAD = motorSpeedAD - xpos;
-    motorSpeedBC = motorSpeedBC + xpos;
-
-    if (motorSpeedAD < 0) motorSpeedAD = 0;
-    if (motorSpeedBC > 255) motorSpeedBC = 255;
-  }
-  else if (xpos > 564) {
-    xpos = map(xpos, 564, 1023, 0, 255);
-
-    motorSpeedAD = motorSpeedAD + xpos;
-    motorSpeedBC = motorSpeedBC - xpos;
-
-    if (motorSpeedAD > 255) motorSpeedAD = 255;
-    if (motorSpeedBC < 0) motorSpeedBC = 0;
-  }
-
-  analogWrite(enAD, motorSpeedAD);
-  analogWrite(enBC, motorSpeedBC);
-
-
-  
 }
